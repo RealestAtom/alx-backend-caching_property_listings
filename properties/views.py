@@ -5,6 +5,13 @@ from django.core.cache import cache
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from .models import Property
+from django.http import JsonResponse
+
+
+@cache_page(60 * 15)
+def property_list(request):
+    return JsonResponse(request.data)
+
 
 class PropertyListView(ListView):
     model = Property
@@ -12,7 +19,7 @@ class PropertyListView(ListView):
     context_object_name = 'properties'
     paginate_by = 10
     
-    @method_decorator(cache_page(60 * 5))  # Cache for 5 minutes
+    @cache_page(60 * 5)  # Cache for 5 minutes
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
     
@@ -48,8 +55,9 @@ class PropertyDetailView(DetailView):
         cache.set(cache_key, property_obj, 60 * 15)  # Cache for 15 minutes
         return property_obj
     # properties/views.py
-from django.shortcuts import render
-from django.views.decorators.cache import cache_page
+
+
+
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 from django.core.cache import cache
