@@ -366,7 +366,8 @@ def get_redis_cache_metrics() -> Dict[str, Any]:
     except Exception as e:
         metrics['message'] = f'Error getting cache metrics: {str(e)}'
         logger.error(metrics['message'])
-    
+    total_requests = 0
+    return total_requests if total_requests > 0 else 0
     return metrics
 
 
