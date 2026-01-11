@@ -10,7 +10,7 @@ from django.http import JsonResponse
 
 @cache_page(60 * 15)
 def property_list(request):
-    return JsonResponse(request.data)
+    return JsonResponse({request.data})
 
 
 class PropertyListView(ListView):
