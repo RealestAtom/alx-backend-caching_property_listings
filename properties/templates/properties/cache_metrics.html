@@ -1,0 +1,558 @@
+<!-- properties/templates/properties/cache_metrics.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} - Property Listings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .redis-badge {
+            background: linear-gradient(135deg, #DC382C 0%, #A41E2C 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .metric-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .icon-hit {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        }
+        
+        .icon-miss {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        
+        .icon-ratio {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+        
+        .icon-memory {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+        }
+        
+        .icon-keys {
+            background: linear-gradient(135deg, #f39c12 0%, #d35400 100%);
+        }
+        
+        .metric-title {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+        
+        .metric-subtitle {
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+        
+        .hit-ratio-gauge {
+            margin-top: 20px;
+        }
+        
+        .gauge-container {
+            position: relative;
+            height: 120px;
+            margin: 20px 0;
+        }
+        
+        .gauge {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .gauge-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .performance-grade {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        .grade-excellent {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .grade-good {
+            background: #3498db;
+            color: white;
+        }
+        
+        .grade-fair {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .grade-poor {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .trend-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .trend-up {
+            color: #2ecc71;
+        }
+        
+        .trend-down {
+            color: #e74c3c;
+        }
+        
+        .trend-stable {
+            color: #f39c12;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-refresh {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-reset {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-analysis {
+            background: #9b59b6;
+            color: white;
+        }
+        
+        .btn-dashboard {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .status-indicator {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .status-success {
+            background: #d5f4e6;
+            color: #27ae60;
+            border: 2px solid #27ae60;
+        }
+        
+        .status-error {
+            background: #fadbd8;
+            color: #e74c3c;
+            border: 2px solid #e74c3c;
+        }
+        
+        .details-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .detail-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            color: #7f8c8d;
+            font-family: 'Courier New', monospace;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .metric-value {
+                font-size: 1.8rem;
+            }
+        }
+        
+        .message-box {
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="message-box">
+            <h1>
+                <i class="fas fa-chart-bar"></i>
+                Redis Cache Metrics
+                <span class="redis-badge">
+                    <i class="fas fa-database"></i>
+                    REDIS
+                </span>
+            </h1>
+            <p>Real-time analysis of cache hit/miss ratios and performance metrics</p>
+        </header>
+        
+        {% if metrics.status == 'error' %}
+        <div class="status-indicator status-error message-box">
+            <i class="fas fa-exclamation-triangle"></i>
+            {{ metrics.message }}
+        </div>
+        {% endif %}
+        
+        <div class="controls">
+            <button class="control-btn btn-refresh" onclick="refreshMetrics()">
+                <i class="fas fa-sync-alt"></i>
+                Refresh Metrics
+            </button>
+            <button class="control-btn btn-reset" onclick="resetMetrics()">
+                <i class="fas fa-redo"></i>
+                Reset Statistics
+            </button>
+            <a href="{% url 'cache_analysis' %}" class="control-btn btn-analysis">
+                <i class="fas fa-chart-pie"></i>
+                Detailed Analysis
+            </a>
+            <a href="{% url 'property_list' %}" class="control-btn btn-dashboard">
+                <i class="fas fa-home"></i>
+                Back to Properties
+            </a>
+        </div>
+        
+        {% if metrics.status == 'success' %}
+        <div class="metrics-grid">
+            <!-- Hit Ratio Card -->
+            <div class="metric-card message-box">
+                <div class="metric-header">
+                    <div>
+                        <div class="metric-title">Hit Ratio</div>
+                        <div class="metric-value">{{ metrics.hit_percentage }}%</div>
+                    </div>
+                    <div class="metric-icon icon-ratio">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                </div>
+                <div class="hit-ratio-gauge">
+                    <div class="gauge-container">
+                        <!-- Simple CSS gauge -->
+                        <div style="
+                            width: 100%;
+                            height: 20px;
+                            background: #ecf0f1;
+                            border-radius: 10px;
+                            overflow: hidden;
+                            margin: 20px 0;
+                        ">
+                            <div style="
+                                width: {{ metrics.hit_percentage }}%;
+                                height: 100%;
+                                background: linear-gradient(90deg, #2ecc71, #f1c40f);
+                                transition: width 0.5s ease;
+                            "></div>
+                        </div>
+                        <div class="gauge-label">{{ metrics.hit_percentage }}%</div>
+                    </div>
+                </div>
+                <div class="performance-grade grade-{{ metrics.performance.grade|lower }}">
+                    {{ metrics.performance.grade }}
+                </div>
+                <div class="metric-subtitle">
+                    {{ metrics.hits }} hits / {{ metrics.misses }} misses
+                </div>
+                {% if trend.trend_message %}
+                <div class="trend-indicator">
+                    <i class="fas fa-arrow-{% if 'improved' in trend.trend_message %}up trend-up{% elif 'declined' in trend.trend_message %}down trend-down{% else %}right trend-stable{% endif %}"></i>
+                    <span>{{ trend.trend_message }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Hits Card -->
+            <div class="metric-card message-box">
+                <div class="metric-header">
+                    <div>
+                        <div class="metric-title">Cache Hits</div>
+                        <div class="metric-value">{{ metrics.hits|intcomma }}</div>
+                    </div>
+                    <div class="metric-icon icon-hit">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="metric-subtitle">
+                    Successful cache retrievals
+                </div>
+                <div style="margin-top: 15px;">
+                    <div style="font-size: 0.9rem; color: #7f8c8d;">
+                        Operations: {{ metrics.total_operations|intcomma }}
+                    </div>
+                    <div style="font-size: 0.9rem; color: #7f8c8d; margin-top: 5px;">
+                        Commands: {{ metrics.total_commands_processed|intcomma }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Misses Card -->
+            <div class="metric-card message-box">
+                <div class="metric-header">
+                    <div>
+                        <div class="metric-title">Cache Misses</div>
+                        <div class="metric-value">{{ metrics.misses|intcomma }}</div>
+                    </div>
+                    <div class="metric-icon icon-miss">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                </div>
+                <div class="metric-subtitle">
+                    Failed cache retrievals
+                </div>
+                <div style="margin-top: 15px;">
+                    <div style="font-size: 0.9rem; color: #7f8c8d;">
+                        Evicted: {{ metrics.evicted_keys|intcomma }}
+                    </div>
+                    <div style="font-size: 0.9rem; color: #7f8c8d; margin-top: 5px;">
+                        Expired: {{ metrics.expired_keys|intcomma }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Memory Card -->
+            <div class="metric-card message-box">
+                <div class="metric-header">
+                    <div>
+                        <div class="metric-title">Memory Usage</div>
+                        <div class="metric-value">{{ metrics.memory_usage }}</div>
+                    </div>
+                    <div class="metric-icon icon-memory">
+                        <i class="fas fa-memory"></i>
+                    </div>
+                </div>
+                <div class="metric-subtitle">
+                    Current / Peak: {{ metrics.memory_peak }}
+                </div>
+                <div style="margin-top: 15px;">
+                    <div style="font-size: 0.9rem; color: #7f8c8d;">
+                        Uptime: {{ metrics.uptime }}
+                    </div>
+                    <div style="font-size: 0.9rem; color: #7f8c8d; margin-top: 5px;">
+                        Clients: {{ metrics.connected_clients }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Keys Card -->
+            <div class="metric-card message-box">
+                <div class="metric-header">
+                    <div>
+                        <div class="metric-title">Cache Keys</div>
+                        <div class="metric-value">{{ metrics.keys_count|intcomma }}</div>
+                    </div>
+                    <div class="metric-icon icon-keys">
+                        <i class="fas fa-key"></i>
+                    </div>
+                </div>
+                <div class="metric-subtitle">
+                    Total keys in database
+                </div>
+                <div style="margin-top: 15px;">
+                    <div style="font-size: 0.9rem; color: #7f8c8d;">
+                        Redis: {{ metrics.redis_version }}
+                    </div>
+                    <div style="font-size: 0.9rem; color: #7f8c8d; margin-top: 5px;">
+                        Ops/sec: {{ metrics.instantaneous_ops_per_sec }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="details-section message-box">
+            <h2 style="color: #2c3e50; margin-bottom: 20px;">
+                <i class="fas fa-info-circle"></i>
+                Detailed Metrics
+            </h2>
+            
+            <div class="details-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Cache Backend</div>
+                    <div class="detail-value">{{ metrics.cache_backend }}</div>
+                </div>
+                
+                <div class="detail-item">
+                    <div class="detail-label">Hit Ratio</div>
+                    <div class="detail-value">{{ metrics.hit_ratio }} ({{ metrics.hit_percentage }}%)</div>
+                </div>
+                
+                <div class="detail-item">
+                    <div class="detail-label">Total Operations</div>
+                    <div class="detail-value">{{ metrics.total_operations|intcomma }}</div>
+                </div>
+                
+                <div class="detail-item">
+                    <div class="detail-label">Performance Grade</div>
+                    <div class="detail-value">{{ metrics.performance.grade }}</div>
+                </div>
+                
+                <div class="detail-item">
+                    <div class="detail-label">Cache Size</div>
+
+                    

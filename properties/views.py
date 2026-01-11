@@ -173,3 +173,92 @@ def cache_monitor(request):
     
     return render(request, 'properties/cache_monitor.html', context)
 
+from properties.utils import (
+    get_redis_cache_metrics, 
+    get_cache_metrics_trend,
+    reset_cache_metrics,
+    get_detailed_cache_analysis
+)
+import json
+from django.views.decorators.cache import never_cache
+
+@never_cache
+def cache_metrics_view(request):
+    """
+    View to display Redis cache metrics.
+    """
+    metrics = get_redis_cache_metrics()
+    trend = get_cache_metrics_trend()
+    
+    context = {
+        'metrics': metrics,
+        'trend': trend,
+        'page_title': 'Redis Cache Metrics',
+        'refresh_interval': 30,  # seconds
+    }
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'metrics': metrics,
+            'trend': trend,
+        })
+    
+    return render(request, 'properties/cache_metrics.html', context)
+
+
+@never_cache
+def cache_metrics_json(request):
+    """
+    API endpoint for cache metrics (JSON format).
+    """
+    metrics = get_redis_cache_metrics()
+    return JsonResponse(metrics)
+
+
+@never_cache
+def cache_analysis_view(request):
+    """
+    Detailed cache analysis view.
+    """
+    analysis = get_detailed_cache_analysis()
+    
+    context = {
+        'analysis': analysis,
+        'page_title': 'Cache Performance Analysis',
+    }
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse(analysis)
+    
+    return render(request, 'properties/cache_analysis.html', context)
+
+
+@never_cache
+def reset_metrics_view(request):
+    """
+    View to reset cache metrics.
+    """
+    if request.method == 'POST':
+        result = reset_cache_metrics()
+        return JsonResponse(result)
+    
+    return JsonResponse({
+        'error': 'POST method required',
+        'status': 'error'
+    }, status=400)
+
+
+# Class-based view for metrics dashboard
+@method_decorator(never_cache, name='dispatch')
+class CacheMetricsDashboard(TemplateView):
+    """
+    Class-based view for cache metrics dashboard.
+    """
+    template_name = 'properties/cache_dashboard.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['metrics'] = get_redis_cache_metrics()
+        context['trend'] = get_cache_metrics_trend()
+        context['page_title'] = 'Cache Metrics Dashboard'
+        return context
