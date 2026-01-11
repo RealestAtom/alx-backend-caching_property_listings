@@ -7,6 +7,9 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+def get_all_properties():
+    pass
+
 def get_all_properties() -> QuerySet:
     """
     Retrieve all properties with low-level Redis caching.
